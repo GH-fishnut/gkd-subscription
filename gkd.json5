@@ -1,0 +1,141 @@
+// 天猫校园 增强规则（本地订阅）v1
+// 设备实测：Android 16 / vivo V2364A，天猫校园 5.6.2 (com.tmall.campus.and)，GKD 1.12.1
+//
+// 选择器来源全部为真机 dumpsys activity top 实测（非猜测），逐条标注：
+//   [实测] = 已在控件树里看到该 id/类名及 bounds
+//   [待验证] = 需开门页实测后再定
+{
+  id: 2026091400,
+  name: '天猫校园增强(本地)',
+  version: 4,
+  author: 'DSH local',
+  supportUri: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/',
+  updateUrl: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/gkd.json5',
+  checkUpdateUrl: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/gkd.version.json',
+  categories: [],
+  globalGroups: [],
+  apps: [
+    {
+      id: 'com.tmall.campus.and',
+      name: '天猫校园',
+      groups: [
+        {
+          // [实测] SplashActivity 内含 FrameLayout app:id/adsFl（开屏广告容器）
+          key: 1,
+          name: '开屏广告',
+          enable: true,
+          quickFind: true,
+          matchTime: 10000,
+          actionMaximum: 1,
+          resetMatch: 'app',
+          activityIds: [
+            'com.tmall.campus.launcher.SplashActivity',
+            'com.tmall.campus.launcher.HotSplashActivity',
+          ],
+          rules: [
+            { key: 0, matches: '[text*="跳过"][text.length<10][visibleToUser=true]' },
+            { key: 1, matches: '[vid="tv_skip"]' },
+            { key: 2, matches: '[vid="img_skip"]' },
+            { key: 3, matches: '[vid="skip"]' },
+            { key: 4, matches: '[vid="adsFl"] [text="关闭"]' },
+          ],
+        },
+        {
+          // [实测] 首页(MainActivity)自身带广告位：fl_splash_ad(SplashAdContainerView 全屏广告容器)
+          //        / fl_ad_container+tv_ad_tag(顶部横幅) / cl_ad_container(商品推广卡)
+          // 注意：绝不要用 image_close / iv_close / view_close —— 实测那三个 id 属于 vivo 桌面(com.bbk.launcher2)，不是本 App
+          key: 2,
+          name: '首页广告弹窗',
+          enable: true,
+          quickFind: true,
+          matchTime: 15000,
+          actionMaximum: 2,
+          resetMatch: 'app',
+          activityIds: ['com.tmall.campus.and.main.MainActivity'],
+          rules: [
+            { key: 0, matches: '[vid="fl_splash_ad"] [text*="跳过"][visibleToUser=true]' },
+            { key: 1, matches: '[vid="fl_splash_ad"] [text*="关闭"][visibleToUser=true]' },
+            { key: 2, matches: '[text="关闭广告"][visibleToUser=true]' },
+            { key: 3, matches: '[text*="跳过"][text.length<10][visibleToUser=true]' },
+          ],
+        },
+        {
+          // [实测] 扫码页左下角广告位：fl_ad_tag > ll_ad_tag > icon_ad_container > channel_banner_iv
+          //        其关闭按钮 id = channel_banner_close_iv
+          key: 3,
+          name: '局部广告-扫码页横幅',
+          enable: true,
+          quickFind: true,
+          activityIds: ['com.tmall.campus.scancode.activity.ToolsCaptureActivity'],
+          rules: [
+            { key: 0, matches: '[vid="channel_banner_close_iv"][visibleToUser=true]' },
+            { key: 1, matches: '[vid="fl_ad_tag"] [vid="channel_banner_iv"] + [clickable=true]' },
+          ],
+        },
+        {
+          // [实测] 首页右上角「扫一扫」= LinearLayout app:id/scan_view（clickable，bounds 799,146-1045,261）
+          //        内含 iv_top_scan + tv_scan
+          key: 5,
+          name: '功能类-回到首页自动扫一扫',
+          enable: true,
+          quickFind: true,
+          matchTime: 10000,
+          actionMaximum: 1,
+          // 2026-09 用户要求：每次回到首页都点一次（原为 resetMatch: 'app' 只在首次进入 App 时点）
+          // resetMatch: 'activity' => 每次进入 MainActivity 重置计数，配合 actionMaximum: 1 保证每屏只点一次
+          resetMatch: 'activity',
+          activityIds: ['com.tmall.campus.and.main.MainActivity'],
+          rules: [
+            { key: 0, matches: '[vid="scan_view"]' },
+            { key: 1, matches: '[vid="iv_top_scan"]' },
+            { key: 2, matches: '[text="扫一扫"][visibleToUser=true]' },
+          ],
+        },
+        {
+          // [实测] 开门页宿主 = com.tmall.campus.bizwebview.ui.CampusWebActivity
+          //        结构：root > title_bar(tv_title) > container > WebViewHolder(UC WebView，0,127-1080,2153)
+          // 该 WebView 页面（door 页）的「点击开锁」按钮位于页面中部，与原 Xposed 模块
+          // 「点击屏幕中心」的实现一致，故保留屏幕中心的坐标兜底。
+          key: 6,
+          name: '功能类-扫码后自动点击开锁',
+          enable: true,
+          quickFind: true,
+          matchTime: 60000,
+          actionMaximum: 1,
+          resetMatch: 'activity',
+          actionDelay: 800,
+          activityIds: ['com.tmall.campus.bizwebview.ui.CampusWebActivity'],
+          rules: [
+            // 首选：能直接看到按钮文本就点它的中心
+            { key: 0, matches: '[text="点击开锁"][visibleToUser=true]', action: 'clickCenter' },
+            { key: 1, matches: '[text*="点击开锁"][visibleToUser=true]', action: 'clickCenter' },
+            // 兜底：门锁页标题出现「开门/开锁」时，点屏幕中心（等价于原模块行为）
+            {
+              key: 2,
+              matches: ['[vid="tv_title"][text*="开"]', '[vid="container"]'],
+              position: { x: 'screenWidth/2', y: 'screenHeight/2' },
+              action: 'clickCenter',
+            },
+          ],
+        },
+        {
+          // 2026-09 用户图片实测（图3）：支付结果页 —— 顶部金额「¥x.xx」+ 绿勾「支付成功」+ 底部「完成」「查看订单」
+          // 要求：识别到该页即返回上一页，不依赖底部按钮文案，也不点击任何支付相关按钮。
+          // 宿主 Activity 未实测（可能是 H5 或原生收银台结果页），故不限定 activityIds，仅用页面特征文本触发。
+          key: 7,
+          name: '功能类-支付成功页自动返回',
+          enable: true,
+          quickFind: true,
+          matchTime: 15000,
+          actionMaximum: 1,
+          resetMatch: 'activity',
+          actionDelay: 300,
+          rules: [
+            // 「支付成功」是支付结果页独有的特征文案，只据此触发返回
+            { key: 0, matches: '[text="支付成功"][visibleToUser=true]', action: 'back' },
+          ],
+        },
+      ],
+    },
+  ],
+}
