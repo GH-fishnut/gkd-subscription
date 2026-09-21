@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 13,
+  version: 14,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -168,6 +168,30 @@
           rules: [
             // 「支付成功」是支付结果页独有的特征文案，只据此触发返回
             { key: 0, matches: '[text="支付成功"][visibleToUser=true]', action: 'back' },
+          ],
+        },
+      ],
+    },
+    {
+      // 2026-09-21 触发记录实测：天猫校园的全屏推广广告跑在**独立包** com.byazt.fk 里
+      // （com.byazt.fk.Stub_Standard_Portrait_Activity）
+      // 规则只挂在天猫校园下时，GKD 能匹配到、但动作执行不出去 —— 必须给这个包单独配规则
+      id: 'com.byazt.fk',
+      name: '广告SDK(天猫校园)',
+      groups: [
+        {
+          key: 1,
+          name: '全屏广告-推广页',
+          enable: true,
+          matchTime: 10000,
+          actionMaximum: 3,
+          resetMatch: 'activity',
+          actionDelay: 300,
+          rules: [
+            { key: 0, matches: '[desc="virtualNode"]', action: 'back' },
+            { key: 1, matches: '[text*="向上滑动"]', action: 'back' },
+            { key: 2, matches: '[text*="第三方应用"]', action: 'back' },
+            { key: 3, matches: '[text="点击取消静音"]', action: 'back' },
           ],
         },
       ],
