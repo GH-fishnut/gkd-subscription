@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 8,
+  version: 9,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -135,14 +135,17 @@
           key: 8,
           name: '全屏广告-推广页',
           enable: true,
-          quickFind: true,
-          matchTime: 10000,
-          actionMaximum: 1,
+          // 不开 quickFind：广告内容是 WebView，快速查找的索引里没有它内部的节点
+          matchTime: 15000,
+          actionMaximum: 2,
           resetMatch: 'activity',
-          actionDelay: 300,
+          actionDelay: 500,
           rules: [
-            { key: 0, matches: '[text*="第三方应用"][visibleToUser=true]', action: 'back' },
-            { key: 1, matches: '[text*="向上滑动或点击"][visibleToUser=true]', action: 'back' },
+            // 最可靠：广告 SDK 的原生框架按钮（两张实测截图里都有，且极独特）
+            { key: 0, matches: '[text="点击取消静音"][visibleToUser=true]', action: 'back' },
+            // H5 文案兜底（关掉 quickFind 后应能扫到）
+            { key: 1, matches: '[text*="第三方应用"][visibleToUser=true]', action: 'back' },
+            { key: 2, matches: '[text*="向上滑动或点击"][visibleToUser=true]', action: 'back' },
           ],
         },
         {
