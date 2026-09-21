@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 10,
+  version: 11,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -166,9 +166,6 @@
           rules: [
             // 「支付成功」是支付结果页独有的特征文案，只据此触发返回
             { key: 0, matches: '[text="支付成功"][visibleToUser=true]', action: 'back' },
-            // 花形加载弹窗（白色圆角卡片 + 粉色花朵）：这类加载动画通常带「加载」描述，见到即返回
-            { key: 1, matches: '[desc*="加载"][visibleToUser=true]', action: 'back' },
-            { key: 2, matches: '[text*="加载中"][visibleToUser=true]', action: 'back' },
           ],
         },
       ],
