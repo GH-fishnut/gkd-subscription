@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 9,
+  version: 10,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -156,13 +156,19 @@
           name: '功能类-支付成功页自动返回',
           enable: true,
           quickFind: true,
-          matchTime: 15000,
-          actionMaximum: 1,
+          matchTime: 20000,
+          actionMaximum: 2,
           resetMatch: 'activity',
-          actionDelay: 300,
+          // 2026-09-21 实测：支付成功页会停留几秒，之后中央弹出一个花形加载动画，
+          // 紧接着就是全屏推广广告。把延迟提到 2200ms，等页面稳定后立刻返回，
+          // 正好赶在加载弹窗成型之前，广告来不及露脸。
+          actionDelay: 2200,
           rules: [
             // 「支付成功」是支付结果页独有的特征文案，只据此触发返回
             { key: 0, matches: '[text="支付成功"][visibleToUser=true]', action: 'back' },
+            // 花形加载弹窗（白色圆角卡片 + 粉色花朵）：这类加载动画通常带「加载」描述，见到即返回
+            { key: 1, matches: '[desc*="加载"][visibleToUser=true]', action: 'back' },
+            { key: 2, matches: '[text*="加载中"][visibleToUser=true]', action: 'back' },
           ],
         },
       ],
