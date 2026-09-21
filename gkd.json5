@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 18,
+  version: 19,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -176,23 +176,34 @@
           ],
         },
         {
-          // 2026-09 用户图片实测（图3）：支付结果页 —— 顶部金额「¥x.xx」+ 绿勾「支付成功」+ 底部「完成」「查看订单」
-          // 要求：识别到该页即返回上一页，不依赖底部按钮文案，也不点击任何支付相关按钮。
-          // 宿主 Activity 未实测（可能是 H5 或原生收银台结果页），故不限定 activityIds，仅用页面特征文本触发。
+          // 2026-09-21 GKD 快照实测（决定性）：宿主 Activity = com.tmall.campus.weex2.WeexActivity
+          //   快照导出的节点树只有 11 个节点，全是容器：
+          //     action_bar_root > content > ViewGroup > container > FrameLayout
+          //       > render_container > FrameLayout > FrameLayout(childCount=0)
+          //   页面上肉眼可见的「¥0.01」「支付成功」「完成」「查看订单」全部【不在】无障碍树里。
+          // 原因：weex2 是自绘渲染（不生成原生 View），无障碍永远看不到页面内容 ——
+          //   这正是 v18 的 [text="支付成功"] 从未触发过的原因（死规则）。
+          // 结论：触发信号只能取 Activity 层(activityIds) + 树里真实存在的容器 id，不能依赖文本。
           key: 7,
           name: '功能类-支付成功页自动返回',
           enable: true,
-          quickFind: true,
+          // 树是空壳，quickFind 索引里没有可用内容，关掉更稳
+          quickFind: false,
           matchTime: 20000,
           actionMaximum: 1,
           resetMatch: 'activity',
-          // 2026-09-21 实测：支付成功页会停留几秒，之后中央弹出一个花形加载动画，
-          // 紧接着就是全屏推广广告。把延迟提到 2200ms，等页面稳定后立刻返回，
-          // 正好赶在加载弹窗成型之前，广告来不及露脸。
+          // 时间线实测（GKD 界面日志）：22:09:09 进 WeexActivity → 22:09:13 广告页，中间约 4 秒。
+          // 花形加载动画（中央白框 + 笑脸花 + 背景遮罩）就在这 4 秒里出现，同样读不到节点。
+          // 2200ms 后返回，赶在花成型与广告露脸之前。
           actionDelay: 2200,
+          activityIds: ['com.tmall.campus.weex2.WeexActivity'],
           rules: [
-            // 「支付成功」是支付结果页独有的特征文案，只据此触发返回
-            { key: 0, matches: '[text="支付成功"][visibleToUser=true]', action: 'back' },
+            // 主锚点：快照树里实测存在的 Weex 内容容器
+            { key: 0, matches: '[vid="render_container"]', action: 'back' },
+            // 兜底：更外层的容器（同样来自快照实测）
+            { key: 1, matches: '[vid="container"]', action: 'back' },
+            // 保底：万一某些场景该页是原生实现，文本规则仍可命中（本页不会命中，无副作用）
+            { key: 2, matches: '[text="支付成功"][visibleToUser=true]', action: 'back' },
           ],
         },
       ],
