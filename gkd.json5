@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 15,
+  version: 16,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -108,9 +108,12 @@
           enable: true,
           quickFind: true,
           matchTime: 60000,
-          actionMaximum: 1,
+          actionMaximum: 3,
           resetMatch: 'activity',
-          actionDelay: 800,
+          // 2026-09-21 实测：门锁页是 WebView，首次触发时页面未加载完，按钮点不动，
+          // 要点到第二次（约 9 秒后）才生效。把延迟从 800ms 提到 1800ms 等页面就绪，
+          // 并把 actionMaximum 放宽到 3 以允许必要的重试。
+          actionDelay: 1800,
           activityIds: ['com.tmall.campus.bizwebview.ui.CampusWebActivity'],
           rules: [
             // 首选：能直接看到按钮文本就点它的中心
