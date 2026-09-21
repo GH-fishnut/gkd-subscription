@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 7,
+  version: 8,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -125,6 +125,24 @@
               position: { x: 'screenWidth/2', y: 'screenHeight/2' },
               action: 'clickCenter',
             },
+          ],
+        },
+        {
+          // 2026-09-21 真机截图实测：全屏推广页（饿了么/瑞幸等）
+          // Activity 短名: Stub_Standard_Portrait_Activity
+          // 特征文本: 「向上滑动或点击」「跳转至详情页或第三方应用」+ 左下角「广告」标识
+          // 用户要求：出现即直接返回上一步
+          key: 8,
+          name: '全屏广告-推广页',
+          enable: true,
+          quickFind: true,
+          matchTime: 10000,
+          actionMaximum: 1,
+          resetMatch: 'activity',
+          actionDelay: 300,
+          rules: [
+            { key: 0, matches: '[text*="第三方应用"][visibleToUser=true]', action: 'back' },
+            { key: 1, matches: '[text*="向上滑动或点击"][visibleToUser=true]', action: 'back' },
           ],
         },
         {
