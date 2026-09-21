@@ -7,11 +7,11 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 6,
+  version: 7,
   author: 'DSH local',
-  supportUri: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/',
-  updateUrl: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/gkd.json5',
-  checkUpdateUrl: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/gkd.version.json',
+  supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
+  updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
+  checkUpdateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.version.json',
   categories: [],
   globalGroups: [],
   apps: [
