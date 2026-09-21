@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 5,
+  version: 6,
   author: 'DSH local',
   supportUri: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/',
   updateUrl: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/gkd.json5',
@@ -57,6 +57,13 @@
             { key: 1, matches: '[vid="fl_splash_ad"] [text*="关闭"][visibleToUser=true]' },
             { key: 2, matches: '[text="关闭广告"][visibleToUser=true]' },
             { key: 3, matches: '[text*="跳过"][text.length<10][visibleToUser=true]' },
+            // 2026-09-21 真机实测补充：首页中部 banner 广告（如 PANTENE「2/5」轮播）
+            // 结构：fl_ad_container > FrameLayout > banner > [ViewPager, View(关闭)]
+            // 那个关闭 View 自身 clickable=false，所以用 clickCenter 点它的中心
+            { key: 5, matches: '[vid="fl_ad_container"] [vid="banner"] > View[index=1]', action: 'clickCenter' },
+            // 兜底：banner 容器里出现"关闭/跳过"类文本
+            { key: 6, matches: '[vid="fl_ad_container"] [text*="关闭"][visibleToUser=true]' },
+            { key: 7, matches: '[vid="banner"] [text*="跳过"][visibleToUser=true]' },
           ],
         },
         {
