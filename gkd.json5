@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 12,
+  version: 13,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -141,11 +141,13 @@
           resetMatch: 'activity',
           actionDelay: 500,
           rules: [
-            // 最可靠：广告 SDK 的原生框架按钮（两张实测截图里都有，且极独特）
-            { key: 0, matches: '[text="点击取消静音"][visibleToUser=true]', action: 'back' },
-            // H5 文案兜底（关掉 quickFind 后应能扫到）
-            { key: 1, matches: '[text*="第三方应用"][visibleToUser=true]', action: 'back' },
-            { key: 2, matches: '[text*="向上滑动或点击"][visibleToUser=true]', action: 'back' },
+            // 2026-09-21 无障碍实测（决定性）：广告 SDK 给整个广告容器打了 desc="virtualNode"
+            // 它与广告内容无关 —— 不论推瑞幸/饿了么、全屏还是居中小窗，这个标记都在
+            { key: 0, matches: '[desc="virtualNode"]', action: 'back' },
+            // 以下为文本兜底（注意实测文案「向上滑动 或 点击」中间有空格）
+            { key: 1, matches: '[text*="向上滑动"][visibleToUser=true]', action: 'back' },
+            { key: 2, matches: '[text*="第三方应用"][visibleToUser=true]', action: 'back' },
+            { key: 3, matches: '[text="点击取消静音"][visibleToUser=true]', action: 'back' },
           ],
         },
         {
