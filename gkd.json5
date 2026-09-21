@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 11,
+  version: 12,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -157,7 +157,7 @@
           enable: true,
           quickFind: true,
           matchTime: 20000,
-          actionMaximum: 2,
+          actionMaximum: 1,
           resetMatch: 'activity',
           // 2026-09-21 实测：支付成功页会停留几秒，之后中央弹出一个花形加载动画，
           // 紧接着就是全屏推广广告。把延迟提到 2200ms，等页面稳定后立刻返回，
