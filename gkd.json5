@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 17,
+  version: 18,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -156,12 +156,14 @@
               action: 'click',
             },
             // ① 悬浮球类广告（实测 2026-09-21）
-            //   特征文字「关闭悬浮球可继续浏览应用」，点它本身即可关闭
-            //   （这种广告的 X 在右侧中部 [975,513]，与全屏广告的右下角完全不同，
-            //    所以不能再用固定坐标，改点这句提示）
+            //   特征文字「关闭悬浮球可继续浏览应用」作为触发锚点，
+            //   但**实际要点的仍然是 X**（用户实测：点提示文字无效）。
+            //   这种广告的 X 在右侧中部 [975,513] 中心 (997,543)，
+            //   与全屏广告的右下角完全不同，所以单独给一套坐标。
             {
               key: 1,
               matches: '[text*="关闭悬浮球"]',
+              position: { x: 'screenWidth-83', y: 543 },
               action: 'click',
             },
             // ② 全屏推广广告（实测 2026-09-21）：X 固定在右下角
