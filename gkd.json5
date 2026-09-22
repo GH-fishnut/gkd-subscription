@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 25,
+  version: 26,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -98,10 +98,9 @@
           rules: [
             { key: 0, matches: '[vid="scan_view"]' },
             { key: 1, matches: '[vid="iv_top_scan"]' },
-            // v25：删掉这条文本兜底 —— 用户反馈"扫一扫点到首页的推广内容了"。
-            // [text="扫一扫"] 是泛匹配：首页任何写着"扫一扫"的推广位都会被它命中（如"扫一扫领红包"），
-            // 点了就跳推广。只保留 vid 精确匹配，宁可少点，不可点错。
-            // { key: 2, matches: '[text="扫一扫"][visibleToUser=true]' },  // 已停用（误点风险）
+            // 2026-09-22 v26：v25 曾擅自停用这条文本兜底，用户要求"先拿日志再改" —— 已回退。
+            // 保持原样，等拿到触发记录/快照证据后再决定去留。
+            { key: 2, matches: '[text="扫一扫"][visibleToUser=true]' },
           ],
         },
         {
