@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 22,
+  version: 23,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -86,7 +86,10 @@
           name: '功能类-回到首页自动扫一扫',
           enable: true,
           quickFind: true,
-          matchTime: 10000,
+          // v23：用户反馈"扫一扫慢了"。匹配窗口从 10s 拉到 25s ——
+          // 首页若因开屏广告/网络慢导致 scan_view 出现晚于 10s，旧窗口会直接错过（不是点得慢，是没点上）。
+          // 拉长窗口只影响"愿意等多久"，不会让它变慢。
+          matchTime: 25000,
           actionMaximum: 1,
           // 2026-09 用户要求：每次回到首页都点一次（原为 resetMatch: 'app' 只在首次进入 App 时点）
           // resetMatch: 'activity' => 每次进入 MainActivity 重置计数，配合 actionMaximum: 1 保证每屏只点一次
