@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 19,
+  version: 20,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -190,12 +190,17 @@
           // 树是空壳，quickFind 索引里没有可用内容，关掉更稳
           quickFind: false,
           matchTime: 20000,
-          actionMaximum: 1,
+          actionMaximum: 4,
           resetMatch: 'activity',
           // 时间线实测（GKD 界面日志）：22:09:09 进 WeexActivity → 22:09:13 广告页，中间约 4 秒。
           // 花形加载动画（中央白框 + 笑脸花 + 背景遮罩）就在这 4 秒里出现，同样读不到节点。
           // 2200ms 后返回，赶在花成型与广告露脸之前。
-          actionDelay: 2200,
+          // 2026-09-22 v20：用户要求"还没看到就已经被关掉"。
+          // 关键认识：广告一旦弹出来才去关，必然有可见闪现（GKD 必须先收到窗口事件才能动作）。
+          // 想要"看不见"，只能抢在它前面 —— 支付成功页到广告之间有约 4 秒，之前却故意等了 2200ms。
+          // 现在改为：进页面 500ms 就返回，被吞就每 500ms 重试，最多 4 次（覆盖约 2 秒）。
+          actionDelay: 500,
+          actionCd: 500,
           activityIds: ['com.tmall.campus.weex2.WeexActivity'],
           rules: [
             // 主锚点：快照树里实测存在的 Weex 内容容器
