@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 20,
+  version: 21,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -199,8 +199,11 @@
           // 关键认识：广告一旦弹出来才去关，必然有可见闪现（GKD 必须先收到窗口事件才能动作）。
           // 想要"看不见"，只能抢在它前面 —— 支付成功页到广告之间有约 4 秒，之前却故意等了 2200ms。
           // 现在改为：进页面 500ms 就返回，被吞就每 500ms 重试，最多 4 次（覆盖约 2 秒）。
-          actionDelay: 500,
-          actionCd: 500,
+          // 2026-09-22 v21：用户要求"快到自己都来不及看清"。
+          // 第一枪提前到 200ms（页面 onResume 就能收返回键），后三枪 600/1000/1400ms 兜底。
+          // 页面一旦离开 WeexActivity，剩余重试自动失效（activityIds 限定），不会多退。
+          actionDelay: 200,
+          actionCd: 400,
           activityIds: ['com.tmall.campus.weex2.WeexActivity'],
           rules: [
             // 主锚点：快照树里实测存在的 Weex 内容容器
