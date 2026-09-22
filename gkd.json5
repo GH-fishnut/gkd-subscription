@@ -7,7 +7,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 26,
+  version: 27,
   author: 'DSH local',
   supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
   updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
@@ -48,7 +48,8 @@
           name: '首页广告弹窗',
           enable: true,
           quickFind: true,
-          matchTime: 15000,
+          // v27：日志里 7 次"超出匹配时间" —— 15 秒窗口太短，进首页 15 秒后才弹的广告全漏。
+          matchTime: 60000,
           actionMaximum: 2,
           resetMatch: 'app',
           activityIds: ['com.tmall.campus.and.main.MainActivity'],
@@ -60,7 +61,12 @@
             // 2026-09-21 真机实测补充：首页中部 banner 广告（如 PANTENE「2/5」轮播）
             // 结构：fl_ad_container > FrameLayout > banner > [ViewPager, View(关闭)]
             // 那个关闭 View 自身 clickable=false，所以用 clickCenter 点它的中心
-            { key: 5, matches: '[vid="fl_ad_container"] [vid="banner"] > View[index=1]', action: 'clickCenter' },
+            // ── v27：停用（2026-09-22 日志实测证据）────────────────────────
+            // 11:49:36 与 11:51:11 两次误点：落点 (1007,1490) → 首页直接跳进 CampusWebActivity
+            // （WebView 推广页 = 用户截图里的"抽大牌开学见面礼"）。
+            // 根因：View[index=1] 是"按索引猜第二个 View 是关闭按钮"，索引随广告内容变 ——
+            // 那天确实是关闭键，今天变成了推广图。收益小于风险，停用。
+            // { key: 5, matches: '[vid="fl_ad_container"] [vid="banner"] > View[index=1]', action: 'clickCenter' },
             // 兜底：banner 容器里出现"关闭/跳过"类文本
             { key: 6, matches: '[vid="fl_ad_container"] [text*="关闭"][visibleToUser=true]' },
             { key: 7, matches: '[vid="banner"] [text*="跳过"][visibleToUser=true]' },
