@@ -28,7 +28,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 29,
+  version: 30,
   author: 'DSH local',
   supportUri: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/',
   updateUrl: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/gkd.json5',
@@ -115,7 +115,11 @@
           name: '功能类-回到首页自动扫一扫',
           enable: true,
           // v23：用户反馈「扫一扫慢了」。匹配窗口从 10s 拉到 25s。
-          matchTime: 25000,
+          // v30（09-27 触发记录实测）：窗口与「scan_view 可用时刻」几乎贴合 ——
+          //   冷启动时规则要到 App 起来约 25 秒后才等到可匹配节点（记录 17:03:53），
+          //   而一旦命中，130ms 内就跳到扫码页。窗口 25s 意味着加载再慢一点就整条错过。
+          //   再拉到 60s：窗口只决定「愿意等多久」，不会让响应变慢。
+          matchTime: 60000,
           actionMaximum: 1,
           // 2026-09 用户要求：每次回到首页都点一次（原为 resetMatch: 'app'）
           resetMatch: 'activity',
