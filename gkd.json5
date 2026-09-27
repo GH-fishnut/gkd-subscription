@@ -6,6 +6,15 @@
 //   [实测 09-21] = 上一轮真机快照
 //   [待验证]     = 尚无真机证据
 //
+// ── v29 关键修正（2026-09-27 真机实测）────────────────────────────────
+// 【fastQuery 会让本 App 的规则变慢 —— 已全部移除】
+//   v27 写的 quickFind 是无效字段 → 等价于「不指定 fastQuery」→ 规则立即触发；
+//   v28 把它「修正」为 fastQuery: true 之后，实测「回到首页自动扫一扫」
+//   从 1 秒内触发退化成 22 秒后才触发（用户报「自动扫一扫没了」）。
+//   实测方法：am force-stop → monkey 启动 → 每秒查 mCurrentFocus。
+//     v28: 22 秒才跳到 ToolsCaptureActivity；v27(今天早些时候): 1 秒内。
+//   故 v29 起彻底移除 fastQuery 字段，回到 v27 的实际行为。
+//
 // ── v28 关键修正（2026-09-27）──────────────────────────────────────────
 // 1. quickFind → fastQuery
 //    官方规则接口字段名是 fastQuery（gkd.li 官方示例、api/src/index.ts 均为 fastQuery）。
@@ -19,7 +28,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 28,
+  version: 29,
   author: 'DSH local',
   supportUri: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/',
   updateUrl: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/gkd.json5',
@@ -37,7 +46,6 @@
           key: 1,
           name: '开屏广告',
           enable: true,
-          fastQuery: true,
           matchTime: 10000,
           actionMaximum: 1,
           resetMatch: 'app',
@@ -59,7 +67,6 @@
           key: 2,
           name: '首页广告位',
           enable: true,
-          fastQuery: true,
           // v27：日志里 7 次「超出匹配时间」—— 15 秒窗口太短，进首页 15 秒后才弹的广告全漏。
           matchTime: 60000,
           actionMaximum: 2,
@@ -94,7 +101,6 @@
           key: 3,
           name: '局部广告-扫码页横幅',
           enable: true,
-          fastQuery: true,
           activityIds: ['com.tmall.campus.scancode.activity.ToolsCaptureActivity'],
           rules: [
             // v28 删除：[vid="channel_banner_close_iv"] —— 09-27 全页 28 个节点里根本没有这个 id，
@@ -108,7 +114,6 @@
           key: 5,
           name: '功能类-回到首页自动扫一扫',
           enable: true,
-          fastQuery: true,
           // v23：用户反馈「扫一扫慢了」。匹配窗口从 10s 拉到 25s。
           matchTime: 25000,
           actionMaximum: 1,
@@ -131,7 +136,6 @@
           key: 6,
           name: '功能类-设备页自动点击解锁',
           enable: true,
-          fastQuery: true,
           matchTime: 60000,
           actionMaximum: 12,
           resetMatch: 'activity',
@@ -208,7 +212,6 @@
           name: '功能类-支付成功页自动返回',
           enable: true,
           // 树是空壳，fastQuery 索引里没有可用内容，关掉更稳
-          fastQuery: false,
           matchTime: 20000,
           actionMaximum: 8,
           resetMatch: 'activity',
