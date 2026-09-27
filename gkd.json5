@@ -15,6 +15,13 @@
 //     v28: 22 秒才跳到 ToolsCaptureActivity；v27(今天早些时候): 1 秒内。
 //   故 v29 起彻底移除 fastQuery 字段，回到 v27 的实际行为。
 //
+// ── v32（2026-09-27）：撤回 v31 的「扫一扫抢跑兜底」组 ──────────────
+//   v31 试过不等 scan_view、改用顶部栏锚点(tv_school/cl_top)+固定坐标抢跑。
+//   真机实测（v31 已装载、订阅 8 组）：冷启动 25 秒仍未跳转，与 v30 表现相当，
+//   说明瓶颈不是「锚点出现太晚」，而是 GKD 在 App 冷启动早期收不到无障碍事件 /
+//   规则尚未激活 —— 换锚点无法解决。且该组 actionDelay 2s 在热态下反而拖慢并
+//   可能与 key:5 重复点击，故撤除。v32 内容 = v30（保留 matchTime 60s 等全部修正）。
+//
 // ── v28 关键修正（2026-09-27）──────────────────────────────────────────
 // 1. quickFind → fastQuery
 //    官方规则接口字段名是 fastQuery（gkd.li 官方示例、api/src/index.ts 均为 fastQuery）。
@@ -28,7 +35,7 @@
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 31,
+  version: 32,
   author: 'DSH local',
   supportUri: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/',
   updateUrl: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/gkd.json5',
@@ -128,31 +135,6 @@
             { key: 0, matches: '[vid="scan_view"]' },
             { key: 1, matches: '[vid="iv_top_scan"]' },
             { key: 2, matches: '[text="扫一扫"][visibleToUser=true]' },
-          ],
-        },
-        {
-          // ── v31（09-27 实测）：坐标抢跑，解决冷启动命中时机不稳定 ──────────────
-          // 实测：冷启动后规则命中时刻在 6s ~ 28s+ 之间随机，甚至整轮不触发 ——
-          //   因为「首页渲染完成」的无障碍事件与 GKD 接管新进程存在竞态。
-          // 但 App 本身不慢：SplashActivity Displayed +1s923ms、MainActivity +215ms，
-          //   且冷启动第 4 秒的截图证明首页（含右上角「扫一扫」）已完整渲染、无遮挡层。
-          // 故本组不等 scan_view 节点就绪：顶部栏锚点一出现，延迟 2s 后直接点扫一扫坐标。
-          // 坐标来源：[实测 09-27] scan_view bounds=799,146 246x115 → 中心 (922,203)，
-          //   即 screenWidth-158。重复点击无害：跳到扫码页后该坐标落在标题栏空白区
-          //   （扫码页 iv_album 从 x=973 起）。
-          key: 9,
-          name: '功能类-扫一扫抢跑兜底',
-          enable: true,
-          matchTime: 60000,
-          actionMaximum: 3,
-          actionCd: 1500,
-          actionDelay: 2000,
-          resetMatch: 'activity',
-          activityIds: ['com.tmall.campus.and.main.MainActivity'],
-          rules: [
-            // 顶部栏锚点：比 scan_view 更早出现、更靠外层
-            { key: 0, matches: '[vid="tv_school"]', position: { x: 'screenWidth-158', y: 203 }, action: 'click' },
-            { key: 1, matches: '[vid="cl_top"]', position: { x: 'screenWidth-158', y: 203 }, action: 'click' },
           ],
         },
         {
