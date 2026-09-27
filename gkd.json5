@@ -1,17 +1,29 @@
-// 天猫校园 增强规则（本地订阅）v1
+// 天猫校园 增强规则（本地订阅）
 // 设备实测：Android 16 / vivo V2364A，天猫校园 5.6.2 (com.tmall.campus.and)，GKD 1.12.1
 //
-// 选择器来源全部为真机 dumpsys activity top 实测（非猜测），逐条标注：
-//   [实测] = 已在控件树里看到该 id/类名及 bounds
-//   [待验证] = 需开门页实测后再定
+// 选择器来源全部为真机实测（非猜测），逐条标注：
+//   [实测 09-27] = DSH 无障碍语义树 + Shizuku shell（本轮，证据存 dump/real_0927/findings.md）
+//   [实测 09-21] = 上一轮真机快照
+//   [待验证]     = 尚无真机证据
+//
+// ── v28 关键修正（2026-09-27）──────────────────────────────────────────
+// 1. quickFind → fastQuery
+//    官方规则接口字段名是 fastQuery（gkd.li 官方示例、api/src/index.ts 均为 fastQuery）。
+//    旧写法 quickFind 不是合法字段，被解析器静默忽略 —— v27 里 5 处全都没生效过。
+// 2. matches 数组是「全部匹配(AND)」语义，不是「任一匹配」
+//    官方：matches = "Selectors that must ALL match"；
+//          要「任一命中即触发」必须用 anyMatches。
+//    v27 的 key:6 兜底规则因此是【死规则】：它要求同一节点同时含「开」「锁」「设备」。
+// 3. 扫码页 channel_banner_close_iv 在当前版本不存在 → 删除该死规则（见 key:3）
+// 4. 首页中部轮播【没有关闭键】（定案，见 key:2 注释）
 {
   id: 2026091400,
   name: '天猫校园增强(本地)',
-  version: 27,
+  version: 28,
   author: 'DSH local',
-  supportUri: 'https://gh-fishnut.github.io/gkd-subscription/',
-  updateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.json5',
-  checkUpdateUrl: 'https://gh-fishnut.github.io/gkd-subscription/gkd.version.json',
+  supportUri: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/',
+  updateUrl: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/gkd.json5',
+  checkUpdateUrl: 'https://fastly.jsdelivr.net/gh/GH-fishnut/gkd-subscription@main/gkd.version.json',
   categories: [],
   globalGroups: [],
   apps: [
@@ -20,11 +32,12 @@
       name: '天猫校园',
       groups: [
         {
-          // [实测] SplashActivity 内含 FrameLayout app:id/adsFl（开屏广告容器）
+          // [实测 09-21] SplashActivity 内含 FrameLayout app:id/adsFl（开屏广告容器）
+          // [截图实测 09-25] 开屏「一加 16 新品上市」页右上角确有「跳过 3s」文本 → key:0 命中
           key: 1,
           name: '开屏广告',
           enable: true,
-          quickFind: true,
+          fastQuery: true,
           matchTime: 10000,
           actionMaximum: 1,
           resetMatch: 'app',
@@ -41,14 +54,13 @@
           ],
         },
         {
-          // [实测] 首页(MainActivity)自身带广告位：fl_splash_ad(SplashAdContainerView 全屏广告容器)
-          //        / fl_ad_container+tv_ad_tag(顶部横幅) / cl_ad_container(商品推广卡)
-          // 注意：绝不要用 image_close / iv_close / view_close —— 实测那三个 id 属于 vivo 桌面(com.bbk.launcher2)，不是本 App
+          // [实测 09-21] 首页(MainActivity)广告位：fl_ad_container+tv_ad_tag(中部轮播) / cl_ad_container(商品流广告卡)
+          // 注意：绝不要用 image_close / iv_close / view_close —— 实测那三个 id 属于 vivo 桌面(com.bbk.launcher2)
           key: 2,
-          name: '首页广告弹窗',
+          name: '首页广告位',
           enable: true,
-          quickFind: true,
-          // v27：日志里 7 次"超出匹配时间" —— 15 秒窗口太短，进首页 15 秒后才弹的广告全漏。
+          fastQuery: true,
+          // v27：日志里 7 次「超出匹配时间」—— 15 秒窗口太短，进首页 15 秒后才弹的广告全漏。
           matchTime: 60000,
           actionMaximum: 2,
           resetMatch: 'app',
@@ -58,130 +70,125 @@
             { key: 1, matches: '[vid="fl_splash_ad"] [text*="关闭"][visibleToUser=true]' },
             { key: 2, matches: '[text="关闭广告"][visibleToUser=true]' },
             { key: 3, matches: '[text*="跳过"][text.length<10][visibleToUser=true]' },
-            // 2026-09-21 真机实测补充：首页中部 banner 广告（如 PANTENE「2/5」轮播）
-            // 结构：fl_ad_container > FrameLayout > banner > [ViewPager, View(关闭)]
-            // 那个关闭 View 自身 clickable=false，所以用 clickCenter 点它的中心
-            // ── v27：停用（2026-09-22 日志实测证据）────────────────────────
-            // 11:49:36 与 11:51:11 两次误点：落点 (1007,1490) → 首页直接跳进 CampusWebActivity
-            // （WebView 推广页 = 用户截图里的"抽大牌开学见面礼"）。
-            // 根因：View[index=1] 是"按索引猜第二个 View 是关闭按钮"，索引随广告内容变 ——
-            // 那天确实是关闭键，今天变成了推广图。收益小于风险，停用。
-            // { key: 5, matches: '[vid="fl_ad_container"] [vid="banner"] > View[index=1]', action: 'clickCenter' },
-            // 兜底：banner 容器里出现"关闭/跳过"类文本
+            // ── 首页中部轮播：无关闭键（09-27 定案，永久停用按索引点击）────────────
+            // [实测 09-27] fl_ad_container > banner 的直接子级只有 ViewPager 和 1 个 View
+            //   View bounds = 969,1467 76x46（中心 1007,1490）。
+            //   点击该坐标 → 前台立刻变为 CampusWebActivity（商品详情页）。
+            //   比对点击前截图：该坐标上的可见内容就是轮播页码角标（当时显示「2/5」），
+            //   它不是关闭按钮；轮播图本体 ImageView(35,1226 1010x287) 才是可点区域。
+            //   结论：这条横幅【没有关闭键】，点哪都会跳广告页，因此不做任何点击。
+            // { key: 5, matches: '[vid="fl_ad_container"] [vid="banner"] > View', action: 'clickCenter' },
+            // 兜底：banner 容器里出现「关闭/跳过」类文本（09-27 实测该容器内无任何文本节点）
             { key: 6, matches: '[vid="fl_ad_container"] [text*="关闭"][visibleToUser=true]' },
             { key: 7, matches: '[vid="banner"] [text*="跳过"][visibleToUser=true]' },
+            // 商品流左侧广告卡 cl_ad_container（「免费领取 ¥30 学生超吃卡」）同样是【无关闭键】：
+            //   [实测 09-27] cl_ad_container > banner > ViewPager > RecyclerView > ImageView[可点]
+            //   整卡可点、内部无任何按钮/文本 → 不做点击（点了就是打开广告）。
           ],
         },
         {
-          // [实测] 扫码页左下角广告位：fl_ad_tag > ll_ad_tag > icon_ad_container > channel_banner_iv
-          //        其关闭按钮 id = channel_banner_close_iv
+          // [实测 09-27] 扫码页 ToolsCaptureActivity 实际存在的广告节点：
+          //   fl_ad_tag > icon_ad_container > RelativeLayout > RelativeLayout[可点] > channel_banner_iv
+          //   fl_ad_tag > ll_ad_tag > ImageView[desc="AD"] + TextView[text="AD"]
+          // 本次实测 channel_banner_iv 为【不可见】（广告未加载），故无法确认其关闭键结构。
           key: 3,
           name: '局部广告-扫码页横幅',
           enable: true,
-          quickFind: true,
+          fastQuery: true,
           activityIds: ['com.tmall.campus.scancode.activity.ToolsCaptureActivity'],
           rules: [
-            { key: 0, matches: '[vid="channel_banner_close_iv"][visibleToUser=true]' },
+            // v28 删除：[vid="channel_banner_close_iv"] —— 09-27 全页 28 个节点里根本没有这个 id，
+            // 该规则从未命中过（死规则）。等抓到广告真实加载时的树再补关闭键。
             { key: 1, matches: '[vid="fl_ad_tag"] [vid="channel_banner_iv"] + [clickable=true]' },
           ],
         },
         {
-          // [实测] 首页右上角「扫一扫」= LinearLayout app:id/scan_view（clickable，bounds 799,146-1045,261）
+          // [实测 09-27] 首页右上角「扫一扫」= LinearLayout app:id/scan_view（clickable，bounds 799,146 246x115）
           //        内含 iv_top_scan + tv_scan
           key: 5,
           name: '功能类-回到首页自动扫一扫',
           enable: true,
-          quickFind: true,
-          // v23：用户反馈"扫一扫慢了"。匹配窗口从 10s 拉到 25s ——
-          // 首页若因开屏广告/网络慢导致 scan_view 出现晚于 10s，旧窗口会直接错过（不是点得慢，是没点上）。
-          // 拉长窗口只影响"愿意等多久"，不会让它变慢。
+          fastQuery: true,
+          // v23：用户反馈「扫一扫慢了」。匹配窗口从 10s 拉到 25s。
           matchTime: 25000,
           actionMaximum: 1,
-          // 2026-09 用户要求：每次回到首页都点一次（原为 resetMatch: 'app' 只在首次进入 App 时点）
-          // resetMatch: 'activity' => 每次进入 MainActivity 重置计数，配合 actionMaximum: 1 保证每屏只点一次
+          // 2026-09 用户要求：每次回到首页都点一次（原为 resetMatch: 'app'）
           resetMatch: 'activity',
           activityIds: ['com.tmall.campus.and.main.MainActivity'],
           rules: [
             { key: 0, matches: '[vid="scan_view"]' },
             { key: 1, matches: '[vid="iv_top_scan"]' },
-            // 2026-09-22 v26：v25 曾擅自停用这条文本兜底，用户要求"先拿日志再改" —— 已回退。
-            // 保持原样，等拿到触发记录/快照证据后再决定去留。
             { key: 2, matches: '[text="扫一扫"][visibleToUser=true]' },
           ],
         },
         {
-          // [实测] 开门页宿主 = com.tmall.campus.bizwebview.ui.CampusWebActivity
-          //        结构：root > title_bar(tv_title) > container > WebViewHolder(UC WebView，0,127-1080,2153)
-          // 该 WebView 页面（door 页）的「点击开锁」按钮位于页面中部，与原 Xposed 模块
-          // 「点击屏幕中心」的实现一致，故保留屏幕中心的坐标兜底。
+          // [实测 09-21/09-27] 开门/设备页宿主 = com.tmall.campus.bizwebview.ui.CampusWebActivity
+          //   结构：root > title_bar(tv_title) > container(RelativeLayout) > FrameLayout > WebView
+          //   [实测 09-27] 本 Activity 的 WebView 内部节点【是可读的】（对比：weex2 的 WeexActivity 不可读）
+          //     实测能读到「花花商城」「我的小红花7」「兑换」「加入购物车」「领券购买」等 WebView 内文本。
+          //   ⚠️ 该 Activity 同时承载：饮水设备页 / 商品详情页 / 活动推广页（花花商城等），
+          //      绝不能按 Activity 无差别做 back 或点屏幕中心。
           key: 6,
-          name: '功能类-扫码后自动点击开锁',
+          name: '功能类-设备页自动点击解锁',
           enable: true,
-          quickFind: true,
+          fastQuery: true,
           matchTime: 60000,
           actionMaximum: 12,
           resetMatch: 'activity',
-          // 2026-09-21 实测：门锁页是 WebView，首次触发时页面未加载完，按钮点不动，
-          // 要点到第二次（约 9 秒后）才生效。把延迟从 800ms 提到 1800ms 等页面就绪，
-          // 并把 actionMaximum 放宽到 3 以允许必要的重试。
-          // v24：用户反馈"点击解锁也慢了"。根因是 v16 我设的 actionDelay: 1800 ——
-          // 那是"等 1.8 秒点一次"，可门锁页是 WebView、就绪时间不确定，一次没中就白等。
-          // 改成"300ms 起密集重试"：页面一就绪立刻点中，最多 12 次（覆盖约 4.7 秒）。
           actionDelay: 300,
           actionCd: 400,
           activityIds: ['com.tmall.campus.bizwebview.ui.CampusWebActivity'],
           rules: [
-            // 首选：能直接看到按钮文本就点它的中心
+            // 首选：能直接看到按钮文本就点它的中心（WebView 内文本本通道可读，09-27 实测）
             { key: 0, matches: '[text="点击解锁"][visibleToUser=true]', action: 'clickCenter' },
             { key: 1, matches: '[text*="点击解锁"][visibleToUser=true]', action: 'clickCenter' },
             // 兼容旧版文案
             { key: 10, matches: '[text*="点击开锁"][visibleToUser=true]', action: 'clickCenter' },
-            // 兜底：门锁页标题出现「开门/开锁」时，点屏幕中心（等价于原模块行为）
+            // 兜底：标题显示是设备页时，点「点击解锁」按钮的实际位置
+            //   [截图实测 09-25] 设备使用页（1000110262）：标题「设备使用」，
+            //   「点击解锁」按钮中心 ≈ (540, 1541) = screenWidth/2, screenHeight/2+341（1080x2400）
+            //   v27 这里写的是 matches 数组 —— 而 matches 是 AND 语义，要求 tv_title 文本
+            //   同时含「开」「锁」「设备」三个词，永远不可能成立 → 死规则，v28 改用 anyMatches。
             {
               key: 2,
-              matches: ['[vid="tv_title"][text*="开"]', '[vid="tv_title"][text*="锁"]', '[vid="tv_title"][text*="设备"]', '[vid="container"]'],
-              position: { x: 'screenWidth/2', y: 'screenHeight/2' },
-              action: 'clickCenter',
+              anyMatches: [
+                '[vid="tv_title"][text*="设备"]',
+                '[vid="tv_title"][text*="开锁"]',
+                '[vid="tv_title"][text*="开门"]',
+              ],
+              position: { x: 'screenWidth/2', y: 'screenHeight/2+341' },
+              action: 'click',
             },
           ],
         },
         {
-          // 2026-09-21 真机截图实测：全屏推广页（饿了么/瑞幸等）
-          // Activity 短名: Stub_Standard_Portrait_Activity
-          // 特征文本: 「向上滑动或点击」「跳转至详情页或第三方应用」+ 左下角「广告」标识
-          // 用户要求：出现即直接返回上一步
+          // [实测 09-21] 全屏推广页（饿了么/瑞幸等），Activity 短名 Stub_Standard_Portrait_Activity
+          // 特征文本：「向上滑动或点击」「跳转至详情页或第三方应用」+ 左下角「广告」标识
           key: 8,
           name: '全屏广告-推广页',
           enable: true,
-          // 不开 quickFind：广告内容是 WebView，快速查找的索引里没有它内部的节点
+          // 不开 fastQuery：广告内容是 WebView，快速查找的索引里没有它内部的节点
           matchTime: 15000,
           actionMaximum: 2,
           resetMatch: 'activity',
           actionDelay: 500,
           rules: [
-            // 2026-09-21 实测结论（决定性）：这个全屏广告**会吃掉返回键** ——
-            // 手动验证：发 back 无效，必须先点右下角 X 才能关掉。
-            // 因此 v8~v14 的 action:'back' 全部无效（规则匹配得再准也没用）。
-            // 现在改为**坐标点击 X**：X 图标实测 bounds=[960,2250]-[1032,2322]，
-            // 中心 (996,2286) = screenWidth-84, screenHeight-114。
+            // 09-21 实测（决定性）：这个全屏广告会吃掉返回键，必须先点右下角 X。
+            // X 实测 bounds=[960,2250]-[1032,2322]，中心 (996,2286) = screenWidth-84, screenHeight-114。
             {
               key: 0,
               matches: '[desc="virtualNode"]',
               position: { x: 'screenWidth-84', y: 'screenHeight-114' },
               action: 'click',
             },
-            // ① 悬浮球类广告（实测 2026-09-21）
-            //   特征文字「关闭悬浮球可继续浏览应用」作为触发锚点，
-            //   但**实际要点的仍然是 X**（用户实测：点提示文字无效）。
-            //   这种广告的 X 在右侧中部 [975,513] 中心 (997,543)，
-            //   与全屏广告的右下角完全不同，所以单独给一套坐标。
+            // ① 悬浮球类广告：特征文字「关闭悬浮球可继续浏览应用」作锚点，实际仍点 X（右侧中部）
             {
               key: 1,
               matches: '[text*="关闭悬浮球"]',
               position: { x: 'screenWidth-83', y: 543 },
               action: 'click',
             },
-            // ② 全屏推广广告（实测 2026-09-21）：X 固定在右下角
+            // ② 全屏推广广告：X 固定在右下角
             {
               key: 2,
               matches: '[text="点击取消静音"][visibleToUser=true]',
@@ -191,33 +198,26 @@
           ],
         },
         {
-          // 2026-09-21 GKD 快照实测（决定性）：宿主 Activity = com.tmall.campus.weex2.WeexActivity
-          //   快照导出的节点树只有 11 个节点，全是容器：
-          //     action_bar_root > content > ViewGroup > container > FrameLayout
-          //       > render_container > FrameLayout > FrameLayout(childCount=0)
-          //   页面上肉眼可见的「¥0.01」「支付成功」「完成」「查看订单」全部【不在】无障碍树里。
-          // 原因：weex2 是自绘渲染（不生成原生 View），无障碍永远看不到页面内容 ——
+          // [实测 09-21] 宿主 = com.tmall.campus.weex2.WeexActivity
+          //   快照导出的节点树只有 11 个节点，全是容器，页面内容全部【不在】无障碍树里。
+          //   原因：weex2 是自绘渲染（不生成原生 View），无障碍永远看不到页面内容 ——
           //   这正是 v18 的 [text="支付成功"] 从未触发过的原因（死规则）。
-          // 结论：触发信号只能取 Activity 层(activityIds) + 树里真实存在的容器 id，不能依赖文本。
+          //   ⚠️ 与 key:6 的 CampusWebActivity 相反：那个 Activity 的 WebView 节点【可读】。
+          // 结论：触发信号只能取 Activity 层 + 树里真实存在的容器 id，不能依赖文本。
           key: 7,
           name: '功能类-支付成功页自动返回',
           enable: true,
-          // 树是空壳，quickFind 索引里没有可用内容，关掉更稳
-          quickFind: false,
+          // 树是空壳，fastQuery 索引里没有可用内容，关掉更稳
+          fastQuery: false,
           matchTime: 20000,
           actionMaximum: 8,
           resetMatch: 'activity',
-          // 时间线实测（GKD 界面日志）：22:09:09 进 WeexActivity → 22:09:13 广告页，中间约 4 秒。
-          // 花形加载动画（中央白框 + 笑脸花 + 背景遮罩）就在这 4 秒里出现，同样读不到节点。
-          // 2200ms 后返回，赶在花成型与广告露脸之前。
-          // 2026-09-22 v20：用户要求"还没看到就已经被关掉"。
-          // 关键认识：广告一旦弹出来才去关，必然有可见闪现（GKD 必须先收到窗口事件才能动作）。
-          // 想要"看不见"，只能抢在它前面 —— 支付成功页到广告之间有约 4 秒，之前却故意等了 2200ms。
-          // 现在改为：进页面 500ms 就返回，被吞就每 500ms 重试，最多 4 次（覆盖约 2 秒）。
-          // 2026-09-22 v22：用户要求步长 200ms，且指出"广告弹窗可能是随机出的"。
-          // 应对随机性靠两点：①第一枪极早(200ms) ②后续密集重试拉开覆盖窗。
-          // 八枪落点：200/400/600/800/1000/1200/1400/1600ms（步长 200，覆盖 1.6 秒）。
+          // 22:09:09 进 WeexActivity → 22:09:13 广告页，中间约 4 秒；花形加载动画就在这 4 秒里。
+          // v22：用户要求步长 200ms，且广告弹窗可能随机出。
+          // 八枪落点：200/400/600/800/1000/1200/1400/1600ms（覆盖 1.6 秒）。
           // 页面一旦离开 WeexActivity，剩余重试自动失效（activityIds 限定），不会多退。
+          // [录屏实测 09-25 08:07] 支付成功页(¥0.06)几乎不停留，下一秒已回到「设备使用」并显示
+          //   「请在设备上操作出水/暂停」—— 与本节设计一致。
           actionDelay: 200,
           actionCd: 200,
           activityIds: ['com.tmall.campus.weex2.WeexActivity'],
